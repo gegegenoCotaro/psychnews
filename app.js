@@ -109,6 +109,46 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Helper to parse PubMed style date strings to Date object for sorting
+    const monthMap = {
+        'jan': 0, 'feb': 1, 'mar': 2, 'apr': 3, 'may': 4, 'jun': 5,
+        'jul': 6, 'aug': 7, 'sep': 8, 'oct': 9, 'nov': 10, 'dec': 11
+    };
+
+    function parseArticleDate(dateStr) {
+        if (!dateStr) return new Date(0);
+        // Handle Japanese date strings if any
+        if (dateStr.includes('年')) {
+            const match = dateStr.match(/(\d+)年(\d+)月?(\d+)?日?/);
+            if (match) {
+                const y = parseInt(match[1], 10);
+                const m = parseInt(match[2], 10) - 1;
+                const d = match[3] ? parseInt(match[3], 10) : 1;
+                return new Date(y, m, d);
+            }
+        }
+        const parts = dateStr.trim().split(/\s+/);
+        let year = 2026;
+        let month = 0;
+        let day = 1;
+        
+        if (parts.length > 0) {
+            const y = parseInt(parts[0], 10);
+            if (!isNaN(y)) year = y;
+        }
+        if (parts.length > 1) {
+            const mStr = parts[1].toLowerCase().substring(0, 3);
+            if (monthMap[mStr] !== undefined) {
+                month = monthMap[mStr];
+            }
+        }
+        if (parts.length > 2) {
+            const d = parseInt(parts[2], 10);
+            if (!isNaN(d)) day = d;
+        }
+        return new Date(year, month, day);
+    }
+
     // Initialize application by fetching JSON data
     async function init() {
         try {
@@ -118,6 +158,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 throw new Error('Failed to fetch articles database');
             }
             allArticles = await response.json();
+            
+            // Sort articles by publication date descending (newest first)
+            allArticles.sort((a, b) => parseArticleDate(b.published) - parseArticleDate(a.published));
             
             // Handle URL Sync Key for automated setup
             const urlParams = new URLSearchParams(window.location.search);
