@@ -4,14 +4,13 @@ import json
 import urllib.request
 import urllib.parse
 import xml.etree.ElementTree as ET
-
+import time
 # Configuration
 SEARCH_QUERY = '("informal coercion" OR "perceived coercion" OR "coercion psychiatry" OR "psychiatric nursing")'
 MAX_RESULTS = 50
 WORKSPACE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA_FILE = os.path.join(WORKSPACE_DIR, 'src', 'data', 'articles.json')
 TEMP_DIR = os.path.join(WORKSPACE_DIR, 'tmp_research')
-
 # Fallback images matching categories
 CATEGORIES_IMAGES = {
     "Coercion & Ethics": "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=800",
@@ -19,10 +18,8 @@ CATEGORIES_IMAGES = {
     "General Medical Science": "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=800",
     "Research Methods": "https://images.unsplash.com/photo-1478737270239-2f02b77fc618?w=800"
 }
-
 def get_fallback_image(category):
     return CATEGORIES_IMAGES.get(category, "https://images.unsplash.com/photo-1527689368864-3a821dbccc34?w=800")
-
 def search_pubmed(query, max_results=8):
     print(f"Searching PubMed for query: {query}")
     url = f"https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term={urllib.parse.quote(query)}&retmode=json&retmax={max_results}&sort=most_recent"
@@ -35,8 +32,7 @@ def search_pubmed(query, max_results=8):
             return pmids
     except Exception as e:
         print(f"Error querying PubMed: {e}")
-        return []
-
+        raise e
 def fetch_abstracts(pmids):
     if not pmids:
         return []
@@ -76,8 +72,7 @@ def fetch_abstracts(pmids):
             return articles
     except Exception as e:
         print(f"Error fetching abstracts: {e}")
-        return []
-
+        raise e
 def classify_fallback(title, abstract):
     text = (title + " " + abstract).lower()
     if "coercion" in text or "forced" in text or "compulsory" in text or "involuntary" in text:
@@ -88,7 +83,6 @@ def classify_fallback(title, abstract):
         return "Research Methods"
     else:
         return "General Medical Science"
-
 def process_with_gemini(article):
     api_key = os.environ.get("GEMINI_API_KEY")
     if not api_key:
@@ -180,87 +174,95 @@ def process_with_gemini(article):
             "imageUrl": get_fallback_image(category),
             "category": category
         }
-
 def main():
-    # Ensure data directory exists
-    os.makedirs(os.path.dirname(DATA_FILE), exist_ok=True)
-    
-    # Load existing articles
-    existing_articles = []
-    existing_ids = set()
-    if os.path.exists(DATA_FILE):
-        try:
-            with open(DATA_FILE, 'r', encoding='utf-8') as f:
-                existing_articles = json.load(f)
-                existing_ids = {art['id'].replace('pmid_', '') for art in existing_articles}
-        except Exception as e:
-            print(f"Error loading existing database: {e}. Starting fresh...")
-    
-    # Define categories, queries and limits
-    CATEGORIES_QUERIES = [
-        {
-            "name": "Coercion & Ethics",
-            "query": '("informal coercion" OR "perceived coercion" OR "coercion psychiatry" OR "coercive measures psychiatry")',
-            "limit": 25
-        },
-        {
-            "name": "Psychiatric Nursing",
-            "query": '("psychiatric nursing" OR "mental health nursing" OR "psychiatric care")',
-            "limit": 10
-        },
-        {
-            "name": "Research Methods",
-            "query": '("research methods" OR "methodology" OR "qualitative research" OR "randomized controlled trial") AND ("psychiatric nursing" OR "nursing" OR "psychiatry")',
-            "limit": 8
-        },
-        {
-            "name": "AI & Technology",
-            "query": '"nursing" AND ("artificial intelligence" OR "AI" OR "large language model" OR "chatgpt" OR "digital technology")',
-            "limit": 7
-        }
-    ]
-    
-    # Fetch and merge PMIDs from all categories, removing duplicates
-    pmids = []
-    seen_pmids = set()
-    for cat in CATEGORIES_QUERIES:
-        cat_pmids = search_pubmed(cat["query"], cat["limit"])
-        added_count = 0
-        for pmid in cat_pmids:
-            if pmid not in seen_pmids:
-                pmids.append(pmid)
-                seen_pmids.add(pmid)
-                added_count += 1
-        print(f"Category '{cat['name']}': Added {added_count} unique PMIDs (out of {len(cat_pmids)} found).")
-
-    print(f"Total merged PMIDs: {len(pmids)}")
-    
-    # Filter new ones
-    new_pmids = [pmid for pmid in pmids if pmid not in existing_ids]
-    if not new_pmids:
-        print("No new articles found. Database is up to date.")
-        return
-        
-    print(f"Found {len(new_pmids)} new articles to translate and add.")
-    
-    # Fetch details
-    raw_articles = fetch_abstracts(new_pmids)
-    
-    # Process
-    processed_new = []
-    for raw in raw_articles:
-        rich = process_with_gemini(raw)
-        processed_new.append(rich)
-        
-    # Merge and Save (put new ones at the beginning)
-    updated_list = processed_new + existing_articles
-    
     try:
-        with open(DATA_FILE, 'w', encoding='utf-8') as f:
-            json.dump(updated_list, f, ensure_ascii=False, indent=2)
-        print(f"Database successfully updated. Added {len(processed_new)} articles.")
+        # Ensure data directory exists
+        os.makedirs(os.path.dirname(DATA_FILE), exist_ok=True)
+        
+        # Load existing articles
+        existing_articles = []
+        existing_ids = set()
+        if os.path.exists(DATA_FILE):
+            try:
+                with open(DATA_FILE, 'r', encoding='utf-8') as f:
+                    existing_articles = json.load(f)
+                    existing_ids = {art['id'].replace('pmid_', '') for art in existing_articles}
+            except Exception as e:
+                print(f"Error loading existing database: {e}. Starting fresh...")
+        
+        # Define categories, queries and limits
+        CATEGORIES_QUERIES = [
+            {
+                "name": "Coercion & Ethics",
+                "query": '("informal coercion" OR "perceived coercion" OR "coercion psychiatry" OR "coercive measures psychiatry")',
+                "limit": 25
+            },
+            {
+                "name": "Psychiatric Nursing",
+                "query": '("psychiatric nursing" OR "mental health nursing" OR "psychiatric care")',
+                "limit": 10
+            },
+            {
+                "name": "Research Methods",
+                "query": '("research methods" OR "methodology" OR "qualitative research" OR "randomized controlled trial") AND ("psychiatric nursing" OR "nursing" OR "psychiatry")',
+                "limit": 8
+            },
+            {
+                "name": "AI & Technology",
+                "query": '"nursing" AND ("artificial intelligence" OR "AI" OR "large language model" OR "chatgpt" OR "digital technology")',
+                "limit": 7
+            }
+        ]
+        
+        # Fetch and merge PMIDs from all categories, removing duplicates
+        pmids = []
+        seen_pmids = set()
+        for idx, cat in enumerate(CATEGORIES_QUERIES):
+            if idx > 0:
+                print("Waiting 1.5 seconds to avoid PubMed API rate limits...")
+                time.sleep(1.5)  # Rate limit safety interval
+            cat_pmids = search_pubmed(cat["query"], cat["limit"])
+            added_count = 0
+            for pmid in cat_pmids:
+                if pmid not in seen_pmids:
+                    pmids.append(pmid)
+                    seen_pmids.add(pmid)
+                    added_count += 1
+            print(f"Category '{cat['name']}': Added {added_count} unique PMIDs (out of {len(cat_pmids)} found).")
+        print(f"Total merged PMIDs: {len(pmids)}")
+        
+        # Filter new ones
+        new_pmids = [pmid for pmid in pmids if pmid not in existing_ids]
+        if not new_pmids:
+            print("No new articles found. Database is up to date.")
+            return
+            
+        print(f"Found {len(new_pmids)} new articles to translate and add.")
+        
+        # Fetch details
+        print("Waiting 1.5 seconds before fetching abstracts...")
+        time.sleep(1.5)
+        raw_articles = fetch_abstracts(new_pmids)
+        
+        # Process
+        processed_new = []
+        for raw in raw_articles:
+            rich = process_with_gemini(raw)
+            processed_new.append(rich)
+            
+        # Merge and Save (put new ones at the beginning)
+        updated_list = processed_new + existing_articles
+        
+        try:
+            with open(DATA_FILE, 'w', encoding='utf-8') as f:
+                json.dump(updated_list, f, ensure_ascii=False, indent=2)
+            print(f"Database successfully updated. Added {len(processed_new)} articles.")
+        except Exception as e:
+            print(f"Error writing updated database: {e}")
+            raise e
+            
     except Exception as e:
-        print(f"Error writing updated database: {e}")
-
+        print(f"FATAL ERROR in main update thread: {e}")
+        sys.exit(1)
 if __name__ == "__main__":
     main()
