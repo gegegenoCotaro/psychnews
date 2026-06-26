@@ -260,16 +260,27 @@ def main():
         
         # Filter new ones
         new_pmids = [pmid for pmid in pmids if pmid not in existing_ids]
-        if not new_pmids:
-            print("No new articles found. Database is up to date.")
+        
+        # Extract PMIDs of already saved "[未翻訳]" articles to re-process them
+        retranslate_pmids = [
+            art['id'].replace('pmid_', '') 
+            for art in existing_articles 
+            if "[未翻訳]" in art.get('title', '')
+        ]
+        
+        # Combine new PMIDs and untranslated PMIDs, removing duplicates
+        combined_pmids = list(set(new_pmids) | set(retranslate_pmids))
+        
+        if not combined_pmids:
+            print("No new or untranslated articles found. Database is up to date.")
             return
             
-        print(f"Found {len(new_pmids)} new articles to translate and add.")
+        print(f"Found {len(new_pmids)} new articles and {len(retranslate_pmids)} untranslated articles to process. Total: {len(combined_pmids)}")
         
         # Fetch details
         print("Waiting 1.5 seconds before fetching abstracts...")
         time.sleep(1.5)
-        raw_articles = fetch_abstracts(new_pmids)
+        raw_articles = fetch_abstracts(combined_pmids)
         
         # Process
         processed_new = []
