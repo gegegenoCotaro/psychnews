@@ -186,7 +186,12 @@ def main():
             try:
                 with open(DATA_FILE, 'r', encoding='utf-8') as f:
                     existing_articles = json.load(f)
-                    existing_ids = {art['id'].replace('pmid_', '') for art in existing_articles}
+                    # [未翻訳] となっている論文は、APIキー設定後に再翻訳できるように既存IDから除外する
+                    existing_ids = {
+                        art['id'].replace('pmid_', '') 
+                        for art in existing_articles 
+                        if "[未翻訳]" not in art.get('title', '')
+                    }
             except Exception as e:
                 print(f"Error loading existing database: {e}. Starting fresh...")
         
@@ -250,8 +255,15 @@ def main():
             rich = process_with_gemini(raw)
             processed_new.append(rich)
             
+        # 古い[未翻訳]記事や、新しく翻訳し直した記事の重複を除外する
+        new_ids_set = {art['id'] for art in processed_new}
+        cleaned_existing = [
+            art for art in existing_articles 
+            if art['id'] not in new_ids_set and "[未翻訳]" not in art.get('title', '')
+        ]
+        
         # Merge and Save (put new ones at the beginning)
-        updated_list = processed_new + existing_articles
+        updated_list = processed_new + cleaned_existing
         
         try:
             with open(DATA_FILE, 'w', encoding='utf-8') as f:
