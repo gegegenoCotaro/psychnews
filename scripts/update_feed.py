@@ -251,7 +251,13 @@ def main():
         
         # Process
         processed_new = []
-        for raw in raw_articles:
+        api_key = os.environ.get("GEMINI_API_KEY")
+        for idx, raw in enumerate(raw_articles):
+            if idx > 0 and api_key:
+                # Gemini API free tier limit is 15 RPM (Request Per Minute).
+                # Waiting 4.2 seconds between requests prevents hitting the 429 rate limit.
+                print("Waiting 4.2 seconds to avoid Gemini API rate limits (15 RPM)...")
+                time.sleep(4.2)
             rich = process_with_gemini(raw)
             processed_new.append(rich)
             
