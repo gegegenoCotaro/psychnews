@@ -16,6 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const newsGrid = document.getElementById('news-grid');
     const featuredSection = document.getElementById('featured-section');
     const toggleFavoritesBtn = document.getElementById('toggle-favorites');
+    const shareFavoritesBtn = document.getElementById('share-favorites');
     const updateFeedBtn = document.getElementById('update-feed-btn');
     const loadMoreBtn = document.getElementById('load-more-btn');
     const loadMoreContainer = document.querySelector('.load-more-container');
@@ -64,6 +65,29 @@ document.addEventListener('DOMContentLoaded', () => {
                 throw new Error('Failed to fetch articles database');
             }
             allArticles = await response.json();
+            
+            // Check for imported favorites in URL query parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            const favsParam = urlParams.get('favs');
+            if (favsParam) {
+                const importedFavs = favsParam.split(',');
+                let importedCount = 0;
+                importedFavs.forEach(id => {
+                    if (id && !favorites.includes(id)) {
+                        favorites.push(id);
+                        importedCount++;
+                    }
+                });
+                if (importedCount > 0) {
+                    localStorage.setItem('psych_news_favorites', JSON.stringify(favorites));
+                    updateFavoritesBtnStyle();
+                    setTimeout(() => {
+                        showToast(`${importedCount} 件のお気に入りをインポートしました！`);
+                    }, 500);
+                }
+                // Clear URL parameters to keep URL clean
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
             
             renderFeed();
             updateSyncStatus();
@@ -355,13 +379,30 @@ document.addEventListener('DOMContentLoaded', () => {
         const gridTitle = document.getElementById('grid-title');
         if (showFavoritesOnly) {
             gridTitle.textContent = 'お気に入りの論文';
+            shareFavoritesBtn.style.display = 'inline-flex';
         } else {
             gridTitle.textContent = '最新の論文ニュース';
+            shareFavoritesBtn.style.display = 'none';
         }
         
         // Reset pagination on mode change
-        visibleCount = 4;
+        visibleCount = 11;
         renderFeed();
+    });
+
+    // Event Listener for "Share Favorites" Sync Button
+    shareFavoritesBtn.addEventListener('click', () => {
+        if (favorites.length === 0) {
+            showToast('お気に入りに登録されている論文がありません。');
+            return;
+        }
+        const shareUrl = `${window.location.origin}${window.location.pathname}?favs=${favorites.join(',')}`;
+        navigator.clipboard.writeText(shareUrl).then(() => {
+            showToast('同期用URLをコピーしました！別のアカウントやスマホでこのURLを開いてください。');
+        }).catch(err => {
+            console.error('Failed to copy URL:', err);
+            showToast('URLのコピーに失敗しました。');
+        });
     });
 
     // Event Listener for "Load More" Pagination Button
