@@ -180,7 +180,7 @@ def process_with_gemini(article):
         }
     except Exception as e:
         print(f"Failed to process with Gemini: {e}")
-        # Fallback to local heuristic
+        raise e  # Raise the exception to fail the Actions run and expose the error log
         category = classify_fallback(article['title'], article['abstract'])
         return {
             "id": f"pmid_{article['pmid']}",
