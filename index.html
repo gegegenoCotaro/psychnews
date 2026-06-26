@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>学術ニュースフィード - 精神科看護学研究</title>
+    <!-- Google Fonts: Outfit for headings, Inter for body -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Premium Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Main Style -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-logo">
+                <i class="fa-solid fa-graduation-cap logo-icon"></i>
+                <div class="logo-text">
+                    <h1>PsychNews</h1>
+                    <span>精神科看護学 学術フィード</span>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button id="update-feed-btn" class="action-btn" title="最新の論文を検索・更新">
+                    <i class="fa-solid fa-arrows-rotate"></i>
+                    <span>最新情報を取得</span>
+                </button>
+                <button id="toggle-favorites" class="action-btn" title="お気に入り一覧">
+                    <i class="fa-regular fa-bookmark"></i>
+                    <span>お気に入り</span>
+                </button>
+                <div class="status-indicator">
+                    <span class="status-dot green"></span>
+                    <span class="status-text" id="sync-status">同期済み</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Category Tabs -->
+        <nav class="category-tabs">
+            <button class="tab-btn active" data-category="all">すべて</button>
+            <button class="tab-btn" data-category="Coercion & Ethics">強制と倫理</button>
+            <button class="tab-btn" data-category="Psychiatric Nursing">精神科看護</button>
+            <button class="tab-btn" data-category="General Medical Science">医学・科学一般</button>
+            <button class="tab-btn" data-category="Research Methods">研究方法論</button>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Hero / Featured Area -->
+            <section id="featured-section" class="featured-section">
+                <!-- Will be dynamically populated by JS -->
+                <div class="skeleton hero-skeleton"></div>
+            </section>
+
+            <!-- News Grid -->
+            <section class="news-grid-section">
+                <h2 class="section-title" id="grid-title">最新の論文ニュース</h2>
+                <div id="news-grid" class="news-grid">
+                    <!-- Skeletons for Loading State -->
+                    <div class="skeleton card-skeleton"></div>
+                    <div class="skeleton card-skeleton"></div>
+                    <div class="skeleton card-skeleton"></div>
+                </div>
+                
+                <!-- Pagination / SmartNews load-more indicator -->
+                <div class="load-more-container">
+                    <button id="load-more-btn" class="action-btn load-more-btn">
+                        <span>過去の論文をさらに読み込む</span>
+                    </button>
+                </div>
+            </section>
+        </main>
+
+        <!-- Detail Slide-Over Panel -->
+        <div id="detail-panel" class="detail-panel">
+            <div class="detail-backdrop" id="detail-backdrop"></div>
+            <div class="detail-content">
+                <button class="close-btn" id="close-detail">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+                
+                <div class="detail-header-img" id="detail-img"></div>
+                
+                <div class="detail-body">
+                    <span class="detail-tag" id="detail-category">カテゴリ</span>
+                    <h2 class="detail-title" id="detail-title">論文タイトル（日本語）</h2>
+                    <p class="detail-orig-title" id="detail-orig-title">Original Title in English</p>
+                    
+                    <div class="detail-meta">
+                        <span class="meta-item" id="detail-source"><i class="fa-solid fa-book-open"></i> Journal</span>
+                        <span class="meta-item" id="detail-date"><i class="fa-regular fa-calendar"></i> Date</span>
+                    </div>
+
+                    <div class="detail-badge-group">
+                        <div class="methodology-badge">
+                            <span class="badge-title">研究手法</span>
+                            <span class="badge-value" id="detail-methodology">手法</span>
+                        </div>
+                    </div>
+
+                    <div class="detail-sections">
+                        <section class="detail-section">
+                            <h3><i class="fa-solid fa-circle-info"></i> ニュース要約</h3>
+                            <p id="detail-summary">要約文が入ります。</p>
+                        </section>
+
+                        <section class="detail-section">
+                            <h3><i class="fa-solid fa-user-doctor"></i> 臨床（看護実践・病棟）への意義</h3>
+                            <p id="detail-clinical">臨床への示唆が入ります。</p>
+                        </section>
+
+                        <section class="detail-section">
+                            <h3><i class="fa-solid fa-lightbulb"></i> 研究への意義</h3>
+                            <p id="detail-research">研究への示唆が入ります。</p>
+                        </section>
+                    </div>
+
+                    <div class="detail-actions">
+                        <a href="#" target="_blank" id="detail-pubmed-link" class="pubmed-btn">
+                            <i class="fa-solid fa-arrow-up-right-from-square"></i> PubMedで論文を読む
+                        </a>
+                        <button id="detail-fav-btn" class="fav-action-btn">
+                            <i class="fa-regular fa-bookmark"></i> お気に入りに保存
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="app-footer">
+            <p>&copy; 2026 PsychNews - Designed for Psychiatric Nursing Research</p>
+        </footer>
+    </div>
+
+    <!-- Application Script -->
+    <script src="app.js"></script>
+</body>
+</html>
