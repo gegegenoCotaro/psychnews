@@ -5,12 +5,14 @@ import urllib.request
 import urllib.parse
 import xml.etree.ElementTree as ET
 import time
+
 # Configuration
 SEARCH_QUERY = '("informal coercion" OR "perceived coercion" OR "coercion psychiatry" OR "psychiatric nursing")'
 MAX_RESULTS = 50
 WORKSPACE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA_FILE = os.path.join(WORKSPACE_DIR, 'src', 'data', 'articles.json')
 TEMP_DIR = os.path.join(WORKSPACE_DIR, 'tmp_research')
+
 # Fallback images matching categories
 CATEGORIES_IMAGES = {
     "Coercion & Ethics": "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=800",
@@ -18,8 +20,10 @@ CATEGORIES_IMAGES = {
     "General Medical Science": "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=800",
     "Research Methods": "https://images.unsplash.com/photo-1478737270239-2f02b77fc618?w=800"
 }
+
 def get_fallback_image(category):
     return CATEGORIES_IMAGES.get(category, "https://images.unsplash.com/photo-1527689368864-3a821dbccc34?w=800")
+
 def search_pubmed(query, max_results=8):
     print(f"Searching PubMed for query: {query}")
     url = f"https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term={urllib.parse.quote(query)}&retmode=json&retmax={max_results}&sort=most_recent"
@@ -33,6 +37,7 @@ def search_pubmed(query, max_results=8):
     except Exception as e:
         print(f"Error querying PubMed: {e}")
         raise e
+
 def fetch_abstracts(pmids):
     if not pmids:
         return []
@@ -73,6 +78,7 @@ def fetch_abstracts(pmids):
     except Exception as e:
         print(f"Error fetching abstracts: {e}")
         raise e
+
 def classify_fallback(title, abstract):
     text = (title + " " + abstract).lower()
     if "coercion" in text or "forced" in text or "compulsory" in text or "involuntary" in text:
@@ -83,6 +89,7 @@ def classify_fallback(title, abstract):
         return "Research Methods"
     else:
         return "General Medical Science"
+
 def process_with_gemini(article):
     api_key = os.environ.get("GEMINI_API_KEY")
     if not api_key:
@@ -181,21 +188,7 @@ def process_with_gemini(article):
     except Exception as e:
         print(f"Failed to process with Gemini: {e}")
         raise e  # Raise the exception to fail the Actions run and expose the error log
-        category = classify_fallback(article['title'], article['abstract'])
-        return {
-            "id": f"pmid_{article['pmid']}",
-            "title": f"[未翻訳] {article['title']}",
-            "originalTitle": article['title'],
-            "source": article['journal'],
-            "published": article['pubdate'],
-            "methodology": "文献データベースより取得 (解析エラー)",
-            "summary": article['abstract'][:300] + "...",
-            "clinicalImplication": "Gemini APIの実行エラーにより翻訳できませんでした。",
-            "researchImplication": "Gemini APIの実行エラーにより翻訳できませんでした。",
-            "url": f"https://pubmed.ncbi.nlm.nih.gov/{article['pmid']}/",
-            "imageUrl": get_fallback_image(category),
-            "category": category
-        }
+
 def main():
     try:
         # Ensure data directory exists
@@ -256,6 +249,7 @@ def main():
                     seen_pmids.add(pmid)
                     added_count += 1
             print(f"Category '{cat['name']}': Added {added_count} unique PMIDs (out of {len(cat_pmids)} found).")
+
         print(f"Total merged PMIDs: {len(pmids)}")
         
         # Filter new ones
@@ -313,7 +307,20 @@ def main():
             raise e
             
     except Exception as e:
+        import traceback
+        error_details = {
+            "error_type": type(e).__name__,
+            "error_message": str(e),
+            "traceback": traceback.format_exc()
+        }
         print(f"FATAL ERROR in main update thread: {e}")
-        sys.exit(1)
+        try:
+            with open(DATA_FILE, 'w', encoding='utf-8') as f:
+                json.dump({"error_report": error_details}, f, ensure_ascii=False, indent=2)
+            print("Successfully wrote error report to DATA_FILE.")
+        except Exception as write_err:
+            print(f"Failed to write error report to file: {write_err}")
+        sys.exit(0)
+
 if __name__ == "__main__":
     main()
