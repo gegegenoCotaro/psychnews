@@ -106,8 +106,8 @@ def generate_fallback(article, existing_untranslated=None):
         "published": article['pubdate'],
         "methodology": "文献データベースより取得",
         "summary": article['abstract'][:300] + "..." if article['abstract'] else "抄録データなし。",
-        "clinicalImplication": "Gemini APIキーを有効にすると、臨床への意義が自动翻訳・要約されます。",
-        "researchImplication": "Gemini APIキーを有効にすると、研究への意義が自动翻訳・要約されます。",
+        "clinicalImplication": "Gemini APIキーを有効にすると、臨床への意義が自動翻訳・要約されます。",
+        "researchImplication": "Gemini APIキーを有効にすると、研究への意義が自動翻訳・要約されます。",
         "url": f"https://pubmed.ncbi.nlm.nih.gov/{article['pmid']}/",
         "imageUrl": get_fallback_image(category),
         "category": category
@@ -281,7 +281,7 @@ def main():
         api_key = os.environ.get("GEMINI_API_KEY")
         
         # Maximum number of API translations to perform in a single workflow run
-        MAX_GEMINI_CALLS = 10
+        MAX_GEMINI_CALLS = 100
         gemini_call_count = 0
         
         for idx, raw in enumerate(raw_articles):
