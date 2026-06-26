@@ -106,6 +106,7 @@ def process_with_gemini(article):
     
     try:
         import google.generativeai as genai
+        from google.generativeai.types import HarmCategory, HarmBlockThreshold
         genai.configure(api_key=api_key)
         
         prompt = f"""
@@ -128,9 +129,30 @@ def process_with_gemini(article):
         }}
         """
         
+        # Disable safety filters for academic research summaries to prevent blocking words like "suicide" or "death"
+        safety_settings = {
+            HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE,
+            HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE,
+            HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE,
+            HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE,
+        }
+        
         model = genai.GenerativeModel('gemini-2.5-flash')
-        response = model.generate_content(prompt)
-        text = response.text.strip()
+        
+        # Retry mechanism for robust API calls
+        max_retries = 2
+        text = ""
+        for attempt in range(max_retries):
+            try:
+                response = model.generate_content(prompt, safety_settings=safety_settings)
+                text = response.text.strip()
+                break
+            except Exception as api_err:
+                if attempt < max_retries - 1:
+                    print(f"Gemini API attempt {attempt + 1} failed: {api_err}. Waiting 6 seconds before retrying...")
+                    time.sleep(6.0)
+                else:
+                    raise api_err
         
         # Strip code blocks
         if text.startswith("```"):
