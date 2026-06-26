@@ -141,6 +141,41 @@
             </div>
         </div>
 
+        <!-- Production Update Guide Modal -->
+        <div id="update-guide-modal" class="detail-panel">
+            <div class="detail-backdrop" id="update-guide-backdrop"></div>
+            <div class="detail-content" style="max-width: 500px; height: auto; max-height: 85vh; border-radius: 16px; margin: auto; top: 0; bottom: 0; left: 0; right: 0; background: var(--bg-surface); border: 1px solid var(--border-color);">
+                <button class="close-btn" id="close-update-guide">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+                <div class="detail-body" style="padding: 2rem;">
+                    <h3 style="font-family: var(--font-heading); font-size: 1.4rem; margin-bottom: 1rem; color: var(--text-primary); display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fa-solid fa-circle-info" style="color: var(--accent-blue);"></i> 最新情報の更新について
+                    </h3>
+                    <p style="font-size: 0.9rem; line-height: 1.6; color: var(--text-secondary); margin-bottom: 1.25rem;">
+                        本番環境（GitHub Pages）では、画面のボタンから直接データベースを更新する機能は動作しません（静的ホスティングの仕様によるものです）。<br><br>
+                        学術データベースは、<strong>毎日午前6:00と午後18:00（日本時間）</strong>にバックグラウンドで自動的に最新論文の検索と更新を行っています。<br><br>
+                        もし今すぐ手動で最新情報を取得したい場合は、以下の手順を実行してください。
+                    </p>
+                    <div style="background: rgba(139, 92, 26, 0.03); border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem; font-size: 0.85rem;">
+                        <ol style="margin-left: 1.2rem; line-height: 1.8; color: var(--text-primary); font-weight: 500;">
+                            <li>GitHubリポジトリの <strong>Actions</strong> タブを開きます。</li>
+                            <li>左側のメニューから <strong>Update Academic Feed</strong> ワークフローを選択します。</li>
+                            <li>右側の <strong>Run workflow</strong> ボタンをクリックして実行します。</li>
+                        </ol>
+                    </div>
+                    <div style="display: flex; gap: 0.75rem; justify-content: flex-end;">
+                        <a href="https://github.com/gegegenoCotaro/psychnews/actions" target="_blank" class="action-btn" style="text-decoration: none; margin: 0; background: var(--bg-main);">
+                            <i class="fa-brands fa-github"></i> GitHub Actionsを開く
+                        </a>
+                        <button id="btn-close-guide" class="action-btn" style="margin: 0; background: var(--bg-surface);">
+                            閉じる
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Footer -->
         <footer class="app-footer">
             <p>&copy; 2026 PsychNews - Designed for Psychiatric Nursing Research</p>
@@ -150,6 +185,6 @@
     <!-- Supabase Client Library -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <!-- Application Script -->
-    <script src="app.js?v=20260626_1832"></script>
+    <script src="app.js?v=20260626_1845"></script>
 </body>
 </html>

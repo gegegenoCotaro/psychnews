@@ -546,8 +546,39 @@ document.addEventListener('DOMContentLoaded', () => {
         observer.observe(loadMoreBtn);
     }
 
+    // Guide Modal Elements for Production Update
+    const updateGuideModal = document.getElementById('update-guide-modal');
+    const updateGuideBackdrop = document.getElementById('update-guide-backdrop');
+    const closeUpdateGuideBtn = document.getElementById('close-update-guide');
+    const btnCloseGuide = document.getElementById('btn-close-guide');
+
+    function openUpdateGuide() {
+        if (updateGuideModal) {
+            updateGuideModal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+    }
+
+    function closeUpdateGuide() {
+        if (updateGuideModal) {
+            updateGuideModal.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+    }
+
+    if (closeUpdateGuideBtn) closeUpdateGuideBtn.addEventListener('click', closeUpdateGuide);
+    if (updateGuideBackdrop) updateGuideBackdrop.addEventListener('click', closeUpdateGuide);
+    if (btnCloseGuide) btnCloseGuide.addEventListener('click', closeUpdateGuide);
+
     // Event Listener for "Fetch Latest" API Update Button
     updateFeedBtn.addEventListener('click', async () => {
+        const isProduction = window.location.hostname.endsWith('github.io');
+        
+        if (isProduction) {
+            openUpdateGuide();
+            return;
+        }
+
         const icon = updateFeedBtn.querySelector('i');
         icon.classList.add('spin');
         updateFeedBtn.disabled = true;
@@ -638,8 +669,13 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Keyboard close (ESC)
     document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && detailPanel.classList.contains('active')) {
-            closeDetailPanel();
+        if (e.key === 'Escape') {
+            if (detailPanel.classList.contains('active')) {
+                closeDetailPanel();
+            }
+            if (updateGuideModal && updateGuideModal.classList.contains('active')) {
+                closeUpdateGuide();
+            }
         }
     });
 
