@@ -196,8 +196,44 @@ def main():
         except Exception as e:
             print(f"Error loading existing database: {e}. Starting fresh...")
     
-    # Search and Fetch
-    pmids = search_pubmed(SEARCH_QUERY, MAX_RESULTS)
+    # Define categories, queries and limits
+    CATEGORIES_QUERIES = [
+        {
+            "name": "Coercion & Ethics",
+            "query": '("informal coercion" OR "perceived coercion" OR "coercion psychiatry" OR "coercive measures psychiatry")',
+            "limit": 25
+        },
+        {
+            "name": "Psychiatric Nursing",
+            "query": '("psychiatric nursing" OR "mental health nursing" OR "psychiatric care")',
+            "limit": 10
+        },
+        {
+            "name": "Research Methods",
+            "query": '("research methods" OR "methodology" OR "qualitative research" OR "randomized controlled trial") AND ("psychiatric nursing" OR "nursing" OR "psychiatry")',
+            "limit": 8
+        },
+        {
+            "name": "AI & Technology",
+            "query": '"nursing" AND ("artificial intelligence" OR "AI" OR "large language model" OR "chatgpt" OR "digital technology")',
+            "limit": 7
+        }
+    ]
+    
+    # Fetch and merge PMIDs from all categories, removing duplicates
+    pmids = []
+    seen_pmids = set()
+    for cat in CATEGORIES_QUERIES:
+        cat_pmids = search_pubmed(cat["query"], cat["limit"])
+        added_count = 0
+        for pmid in cat_pmids:
+            if pmid not in seen_pmids:
+                pmids.append(pmid)
+                seen_pmids.add(pmid)
+                added_count += 1
+        print(f"Category '{cat['name']}': Added {added_count} unique PMIDs (out of {len(cat_pmids)} found).")
+
+    print(f"Total merged PMIDs: {len(pmids)}")
     
     # Filter new ones
     new_pmids = [pmid for pmid in pmids if pmid not in existing_ids]
