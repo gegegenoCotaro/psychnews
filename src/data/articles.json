@@ -14,20 +14,6 @@
     "category": "Coercion & Ethics"
   },
   {
-    "id": "pmid_42144004",
-    "title": "精神科の強制処置、スタッフの態度を形成する要因が明らかに：全国調査で暴力、感情的負担、不安が影響",
-    "originalTitle": "Staff attitudes towards coercion in psychiatry: The role of violence, emotional burden, and insecurity - Evidence from a nationwide study using multiple regression and moderation analyses.",
-    "source": "Comprehensive psychiatry",
-    "published": "2026 Jun",
-    "methodology": "横断的かつ前向き研究（質問票調査）、多重線形回帰分析、モデレーション分析",
-    "summary": "精神科医療における強制処置に対するスタッフの態度について、全国規模の調査が行われました。本研究では、職場での暴力経験や感情的負担、不安感といった要因が、強制処置に対するスタッフの姿勢を大きく左右することが明らかにされています。特に、身体的暴力の経験や言語的暴力による感情的負担が大きいほど、強制処置に対し批判的でない態度を持つ傾向が見られました。",
-    "clinicalImplication": "本研究は、精神科病棟において暴力の予防とエスカレーション解除戦略を強化することの重要性を示唆しています。スタッフが暴力や強制処置に関連する苦痛な出来事の後、感情や自己認識を共有できるデブリーフィングの機会を設け、個別のサポートを提供することで、スタッフの不安感を軽減し、より倫理的なケア実践に繋がる可能性があります。",
-    "researchImplication": "本研究は、これまで不十分に理解されてきた精神科スタッフ側の主観的な要因が、強制処置への態度形成に大きく影響することを全国規模で明らかにした点で学術的意義があります。今後の研究では、これらの主観的要因と強制処置の実施状況、そしてスタッフの精神的健康との複雑な関連性を、縦断的な視点や質的アプローチを用いてさらに深掘りしていくことが求められます。",
-    "url": "https://pubmed.ncbi.nlm.nih.gov/42144004/",
-    "imageUrl": "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=800",
-    "category": "Coercion & Ethics"
-  },
-  {
     "id": "pmid_42117663",
     "title": "[未翻訳] \"Voluntary\" but Pressured: Informal Coercion Mechanisms in Inpatient Psychiatry and a Nursing-Led Safeguard Package.",
     "originalTitle": "\"Voluntary\" but Pressured: Informal Coercion Mechanisms in Inpatient Psychiatry and a Nursing-Led Safeguard Package.",
@@ -348,6 +334,20 @@
     "url": "https://pubmed.ncbi.nlm.nih.gov/42354270/",
     "imageUrl": "https://images.unsplash.com/photo-1478737270239-2f02b77fc618?w=800",
     "category": "Research Methods"
+  },
+  {
+    "id": "pmid_42144004",
+    "title": "精神科の強制処置、スタッフの態度を形成する要因が明らかに：全国調査で暴力、感情的負担、不安が影響",
+    "originalTitle": "Staff attitudes towards coercion in psychiatry: The role of violence, emotional burden, and insecurity - Evidence from a nationwide study using multiple regression and moderation analyses.",
+    "source": "Comprehensive psychiatry",
+    "published": "2026 Jun",
+    "methodology": "横断的かつ前向き研究（質問票調査）、多重線形回帰分析、モデレーション分析",
+    "summary": "精神科医療における強制処置に対するスタッフの態度について、全国規模の調査が行われました。本研究では、職場での暴力経験や感情的負担、不安感といった要因が、強制処置に対するスタッフの姿勢を大きく左右することが明らかにされています。特に、身体的暴力の経験や言語的暴力による感情的負担が大きいほど、強制処置に対し批判的でない態度を持つ傾向が見られました。",
+    "clinicalImplication": "本研究は、精神科病棟において暴力の予防とエスカレーション解除戦略を強化することの重要性を示唆しています。スタッフが暴力や強制処置に関連する苦痛な出来事の後、感情や自己認識を共有できるデブリーフィングの機会を設け、個別のサポートを提供することで、スタッフの不安感を軽減し、より倫理的なケア実践に繋がる可能性があります。",
+    "researchImplication": "本研究は、これまで不十分に理解されてきた精神科スタッフ側の主観的な要因が、強制処置への態度形成に大きく影響することを全国規模で明らかにした点で学術的意義があります。今後の研究では、これらの主観的要因と強制処置の実施状況、そしてスタッフの精神的健康との複雑な関連性を、縦断的な視点や質的アプローチを用いてさらに深掘りしていくことが求められます。",
+    "url": "https://pubmed.ncbi.nlm.nih.gov/42144004/",
+    "imageUrl": "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=800",
+    "category": "Coercion & Ethics"
   },
   {
     "id": "pmid_42218688",
