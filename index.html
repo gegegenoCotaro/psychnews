@@ -64,6 +64,11 @@
             <!-- News Grid -->
             <section class="news-grid-section">
                 <h2 class="section-title" id="grid-title">最新の論文ニュース</h2>
+                <!-- Sync Settings Area -->
+                <div id="sync-settings-panel" class="sync-settings-panel" style="display: none;">
+                    <span><i class="fa-solid fa-cloud-arrow-up"></i> 自動同期中 (合言葉: <strong id="current-sync-key">未設定</strong>)</span>
+                    <button id="change-sync-key-btn" class="text-link-btn">変更</button>
+                </div>
                 <div id="news-grid" class="news-grid">
                     <!-- Skeletons for Loading State -->
                     <div class="skeleton card-skeleton"></div>
@@ -142,6 +147,8 @@
         </footer>
     </div>
 
+    <!-- Supabase Client Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <!-- Application Script -->
     <script src="app.js"></script>
 </body>

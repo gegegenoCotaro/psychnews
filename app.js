@@ -18,6 +18,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const toggleFavoritesBtn = document.getElementById('toggle-favorites');
     const shareFavoritesBtn = document.getElementById('share-favorites');
     const updateFeedBtn = document.getElementById('update-feed-btn');
+    const syncSettingsPanel = document.getElementById('sync-settings-panel');
+    const currentSyncKeyEl = document.getElementById('current-sync-key');
+    const changeSyncKeyBtn = document.getElementById('change-sync-key-btn');
+
+    // Supabase Configuration
+    const supabaseUrl = 'https://ubinbmcxxpoqkhcxhjkj.supabase.co';
+    const supabaseKey = 'sb_publishable_ir_3nxQ6RfaEb_-goiREAg_tzyVn722';
+    const supabaseClient = (typeof supabase !== 'undefined') ? supabase.createClient(supabaseUrl, supabaseKey) : (typeof window.supabase !== 'undefined' ? window.supabase.createClient(supabaseUrl, supabaseKey) : null);
     const loadMoreBtn = document.getElementById('load-more-btn');
     const loadMoreContainer = document.querySelector('.load-more-container');
     const syncStatusText = document.getElementById('sync-status');
@@ -56,6 +64,51 @@ document.addEventListener('DOMContentLoaded', () => {
         'Research Methods': '研究方法論'
     };
 
+    // Cloud sync helper functions
+    async function syncFavoritesToCloud() {
+        const syncKey = localStorage.getItem('psych_news_sync_key');
+        if (!syncKey || !supabaseClient) return;
+        try {
+            const { error } = await supabaseClient
+                .from('user_favorites')
+                .upsert({ sync_key: syncKey, favorite_ids: favorites, updated_at: new Date() });
+            if (error) throw error;
+            console.log('Cloud sync successful');
+        } catch (err) {
+            console.error('Cloud sync failed:', err);
+        }
+    }
+
+    async function loadFavoritesFromCloud(syncKey) {
+        if (!syncKey || !supabaseClient) return;
+        try {
+            const { data, error } = await supabaseClient
+                .from('user_favorites')
+                .select('favorite_ids')
+                .eq('sync_key', syncKey)
+                .maybeSingle();
+            if (error) throw error;
+            if (data && data.favorite_ids) {
+                favorites = data.favorite_ids;
+                localStorage.setItem('psych_news_favorites', JSON.stringify(favorites));
+                updateFavoritesBtnStyle();
+                console.log('Cloud favorites loaded:', favorites);
+            }
+        } catch (err) {
+            console.error('Failed to load cloud favorites:', err);
+        }
+    }
+
+    function updateSyncPanelUI() {
+        const syncKey = localStorage.getItem('psych_news_sync_key');
+        if (syncKey && showFavoritesOnly) {
+            syncSettingsPanel.style.display = 'inline-flex';
+            currentSyncKeyEl.textContent = syncKey;
+        } else {
+            syncSettingsPanel.style.display = 'none';
+        }
+    }
+
     // Initialize application by fetching JSON data
     async function init() {
         try {
@@ -66,27 +119,20 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             allArticles = await response.json();
             
-            // Check for imported favorites in URL query parameters
+            // Handle URL Sync Key for automated setup
             const urlParams = new URLSearchParams(window.location.search);
-            const favsParam = urlParams.get('favs');
-            if (favsParam) {
-                const importedFavs = favsParam.split(',');
-                let importedCount = 0;
-                importedFavs.forEach(id => {
-                    if (id && !favorites.includes(id)) {
-                        favorites.push(id);
-                        importedCount++;
-                    }
-                });
-                if (importedCount > 0) {
-                    localStorage.setItem('psych_news_favorites', JSON.stringify(favorites));
-                    updateFavoritesBtnStyle();
-                    setTimeout(() => {
-                        showToast(`${importedCount} 件のお気に入りをインポートしました！`);
-                    }, 500);
-                }
-                // Clear URL parameters to keep URL clean
+            const syncKeyParam = urlParams.get('sync_key');
+            if (syncKeyParam) {
+                localStorage.setItem('psych_news_sync_key', syncKeyParam);
+                await loadFavoritesFromCloud(syncKeyParam);
+                showToast(`合言葉「${syncKeyParam}」で自動同期を開始しました！`);
                 window.history.replaceState({}, document.title, window.location.pathname);
+            } else {
+                // Pull latest from cloud if sync key already exists locally
+                const existingSyncKey = localStorage.getItem('psych_news_sync_key');
+                if (existingSyncKey) {
+                    await loadFavoritesFromCloud(existingSyncKey);
+                }
             }
             
             renderFeed();
@@ -285,6 +331,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         localStorage.setItem('psych_news_favorites', JSON.stringify(favorites));
         updateFavoritesBtnStyle();
+        syncFavoritesToCloud(); // Sync to Supabase
     }
 
     function updateFavoritesBtnStyle() {
@@ -384,6 +431,7 @@ document.addEventListener('DOMContentLoaded', () => {
             gridTitle.textContent = '最新の論文ニュース';
             shareFavoritesBtn.style.display = 'none';
         }
+        updateSyncPanelUI();
         
         // Reset pagination on mode change
         visibleCount = 11;
@@ -391,18 +439,46 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Event Listener for "Share Favorites" Sync Button
-    shareFavoritesBtn.addEventListener('click', () => {
-        if (favorites.length === 0) {
-            showToast('お気に入りに登録されている論文がありません。');
-            return;
+    shareFavoritesBtn.addEventListener('click', async () => {
+        let syncKey = localStorage.getItem('psych_news_sync_key');
+        if (!syncKey) {
+            // Generate a random-like proposed key
+            const proposedKey = 'pn-' + Math.random().toString(36).substring(2, 8);
+            const key = prompt("他端末と自動同期するための「合言葉」を入力してください。\n(英数字でご自由に入力してください。未入力の場合は自動生成します)", proposedKey);
+            if (key === null) return; // Cancelled
+            syncKey = key.trim() || proposedKey;
+            localStorage.setItem('psych_news_sync_key', syncKey);
+            updateSyncPanelUI();
+            // Initial upload
+            await syncFavoritesToCloud();
         }
-        const shareUrl = `${window.location.origin}${window.location.pathname}?favs=${favorites.join(',')}`;
+        
+        const shareUrl = `${window.location.origin}${window.location.pathname}?sync_key=${syncKey}`;
         navigator.clipboard.writeText(shareUrl).then(() => {
-            showToast('同期用URLをコピーしました！別のアカウントやスマホでこのURLを開いてください。');
+            showToast('自動同期用のリンクをコピーしました！別のアカウントやスマホでこのリンクを一度開いてください。');
         }).catch(err => {
             console.error('Failed to copy URL:', err);
-            showToast('URLのコピーに失敗しました。');
+            showToast('URL of sync failed to copy.');
         });
+    });
+
+    // Event Listener for "Change Sync Key" Button
+    changeSyncKeyBtn.addEventListener('click', async () => {
+        const currentKey = localStorage.getItem('psych_news_sync_key') || '';
+        const newKey = prompt("新しい自動同期用の「合言葉」を入力してください。\n(別端末で設定した合言葉を入力すると、その端末のお気に入りと自動同期されます。空欄にすると同期を解除します)", currentKey);
+        if (newKey === null) return; // Cancelled
+        const trimmedKey = newKey.trim();
+        if (!trimmedKey) {
+            localStorage.removeItem('psych_news_sync_key');
+            updateSyncPanelUI();
+            showToast('自動同期を解除しました。');
+        } else {
+            localStorage.setItem('psych_news_sync_key', trimmedKey);
+            updateSyncPanelUI();
+            showToast(`合言葉を「${trimmedKey}」に変更しました。データを読み込みます...`);
+            await loadFavoritesFromCloud(trimmedKey);
+            renderFeed();
+        }
     });
 
     // Event Listener for "Load More" Pagination Button
