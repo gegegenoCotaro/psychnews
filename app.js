@@ -160,7 +160,8 @@ document.addEventListener('DOMContentLoaded', () => {
             allArticles = await response.json();
             
             // Sort articles by publication date descending (newest first)
-            allArticles.sort((a, b) => parseArticleDate(b.published) - parseArticleDate(a.published));
+            // (Commented out so newly added or backfilled past articles show up at the top in database order)
+            // allArticles.sort((a, b) => parseArticleDate(b.published) - parseArticleDate(a.published));
             
             // Handle URL Sync Key for automated setup
             const urlParams = new URLSearchParams(window.location.search);
