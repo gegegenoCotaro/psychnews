@@ -250,10 +250,61 @@ def main():
                     added_count += 1
             print(f"Category '{cat['name']}': Added {added_count} unique PMIDs (out of {len(cat_pmids)} found).")
 
-        print(f"Total merged PMIDs: {len(pmids)}")
+        print(f"Total merged PMIDs from recent search: {len(pmids)}")
         
         # Filter new ones
         new_pmids = [pmid for pmid in pmids if pmid not in existing_ids]
+        
+        # Past Article Backfill: If there are fewer than 8 new articles (common on slow publication days),
+        # automatically query deeper into PubMed history to pull older articles that haven't been fetched yet.
+        MIN_NEW_ARTICLES = 8
+        if len(new_pmids) < MIN_NEW_ARTICLES:
+            shortage = MIN_NEW_ARTICLES - len(new_pmids)
+            print(f"New articles count ({len(new_pmids)}) is less than minimum required ({MIN_NEW_ARTICLES}).")
+            print(f"Triggering backfill to fetch {shortage} past articles...")
+            
+            backfill_queries = [
+                {
+                    "name": "Coercion & Ethics (Backfill)",
+                    "query": '("informal coercion" OR "perceived coercion" OR "coercion psychiatry" OR "coercive measures psychiatry")',
+                    "limit": 80
+                },
+                {
+                    "name": "Psychiatric Nursing (Backfill)",
+                    "query": '("psychiatric nursing" OR "mental health nursing" OR "psychiatric care")',
+                    "limit": 30
+                },
+                {
+                    "name": "Research Methods (Backfill)",
+                    "query": '("research methods" OR "methodology" OR "qualitative research" OR "randomized controlled trial") AND ("psychiatric nursing" OR "nursing" OR "psychiatry")',
+                    "limit": 25
+                },
+                {
+                    "name": "AI & Technology (Backfill)",
+                    "query": '"nursing" AND ("artificial intelligence" OR "AI" OR "large language model" OR "chatgpt" OR "digital technology")',
+                    "limit": 20
+                }
+            ]
+            
+            backfill_pmids = []
+            seen_backfill = set(seen_pmids)
+            for idx, cat in enumerate(backfill_queries):
+                if idx > 0:
+                    time.sleep(1.5)
+                cat_pmids = search_pubmed(cat["query"], cat["limit"])
+                added = 0
+                for pmid in cat_pmids:
+                    if pmid not in seen_backfill:
+                        backfill_pmids.append(pmid)
+                        seen_backfill.add(pmid)
+                        added += 1
+            
+            past_new_pmids = [pmid for pmid in backfill_pmids if pmid not in existing_ids]
+            print(f"Found {len(past_new_pmids)} past candidate articles for backfill.")
+            
+            added_backfill = past_new_pmids[:shortage]
+            new_pmids.extend(added_backfill)
+            print(f"Successfully backfilled {len(added_backfill)} past articles: {added_backfill}")
         
         # Extract PMIDs of already saved "[未翻訳]" articles to re-process them
         retranslate_pmids = [
@@ -269,7 +320,7 @@ def main():
             print("No new or untranslated articles found. Database is up to date.")
             return
             
-        print(f"Found {len(new_pmids)} new articles and {len(retranslate_pmids)} untranslated articles to process. Total: {len(combined_pmids)}")
+        print(f"Found {len(new_pmids)} new/backfilled articles and {len(retranslate_pmids)} untranslated articles to process. Total: {len(combined_pmids)}")
         
         # Fetch details
         print("Waiting 1.5 seconds before fetching abstracts...")
