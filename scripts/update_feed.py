@@ -196,6 +196,7 @@ def main():
         # Load existing articles
         existing_articles = []
         existing_ids = set()
+        all_existing_ids = set()
         if os.path.exists(DATA_FILE):
             try:
                 with open(DATA_FILE, 'r', encoding='utf-8') as f:
@@ -206,6 +207,11 @@ def main():
                         art['id'].replace('pmid_', '') 
                         for art in existing_articles 
                         if "[未翻訳]" not in art.get('title', '')
+                    }
+                    # 翻訳済み・未翻訳を問わず、データベースに存在するすべてのIDを取得
+                    all_existing_ids = {
+                        art['id'].replace('pmid_', '') 
+                        for art in existing_articles
                     }
             except Exception as e:
                 print(f"Error loading existing database: {e}. Starting fresh...")
@@ -252,10 +258,10 @@ def main():
 
         print(f"Total merged PMIDs from recent search: {len(pmids)}")
         
-        # Filter new ones
-        new_pmids = [pmid for pmid in pmids if pmid not in existing_ids]
+        # Filter new ones (PMIDs completely absent from database)
+        new_pmids = [pmid for pmid in pmids if pmid not in all_existing_ids]
         
-        # Past Article Backfill: If there are fewer than 8 new articles (common on slow publication days),
+        # Past Article Backfill: If there are fewer than 8 truly new articles,
         # automatically query deeper into PubMed history to pull older articles that haven't been fetched yet.
         MIN_NEW_ARTICLES = 8
         if len(new_pmids) < MIN_NEW_ARTICLES:
@@ -299,7 +305,8 @@ def main():
                         seen_backfill.add(pmid)
                         added += 1
             
-            past_new_pmids = [pmid for pmid in backfill_pmids if pmid not in existing_ids]
+            # Filter past articles that are completely absent from database
+            past_new_pmids = [pmid for pmid in backfill_pmids if pmid not in all_existing_ids]
             print(f"Found {len(past_new_pmids)} past candidate articles for backfill.")
             
             added_backfill = past_new_pmids[:shortage]
